@@ -1,0 +1,1065 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Still - Meditation Counter</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --coral: #ff806e;
+    --red: #f0605a;
+    --white: #fff;
+    --muted: #999;
+}
+
+body {
+    background: #000;
+    color: white;
+    font-family: Inter, Arial, sans-serif;
+    min-height: 100vh;
+    padding: 35px 5%;
+}
+
+/* Header */
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 45px;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.logo span {
+    color: var(--coral);
+}
+
+header p {
+    color: #888;
+    font-size: 13px;
+}
+
+/* Main card */
+
+.main-card {
+    position: relative;
+    overflow: hidden;
+    max-width: 1100px;
+    min-height: 650px;
+    margin: auto;
+    padding: 45px 25px;
+    border-radius: 22px;
+    border: 1px solid rgba(255,128,110,.4);
+    background:
+      radial-gradient(ellipse at 80% 30%, rgba(180,35,45,.25), transparent 45%),
+      radial-gradient(ellipse at 15% 80%, rgba(255,90,90,.13), transparent 45%),
+      #080808;
+    text-align: center;
+    isolation: isolate;
+    animation: appear 1.2s ease both;
+}
+
+.smoke-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: right bottom;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 1.5s ease;
+    pointer-events: none;
+}
+
+.smoke-video.loaded {
+    opacity: .8;
+}
+
+.main-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+        90deg,
+        rgba(0,0,0,.85),
+        rgba(0,0,0,.25),
+        rgba(0,0,0,.55)
+    );
+}
+
+@keyframes appear {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+    font-size: clamp(30px, 4vw, 45px);
+    margin-bottom: 12px;
+}
+
+.subtitle {
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 35px;
+}
+
+/* Mode selector */
+
+.mode-switch {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.mode-btn {
+    padding: 12px 27px;
+    border-radius: 30px;
+    background: rgba(0,0,0,.5);
+    border: 1px solid #444;
+    color: #aaa;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.mode-btn.active {
+    background: linear-gradient(120deg, var(--coral), var(--red));
+    color: #000;
+    border-color: transparent;
+    font-weight: 700;
+}
+
+/* Counter */
+
+.counter-circle {
+    width: 245px;
+    height: 245px;
+    border: 2px solid rgba(255,128,110,.7);
+    border-radius: 50%;
+    margin: 0 auto 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,.55);
+    box-shadow: 0 0 55px rgba(240,96,90,.12);
+    transition: .25s;
+}
+
+.counter-circle.pulse {
+    animation: pulse .3s ease;
+}
+
+@keyframes pulse {
+    50% { transform: scale(1.045); }
+}
+
+.count {
+    font-size: 76px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.count-label {
+    color: #aaa;
+    font-size: 12px;
+    letter-spacing: 3px;
+    margin-top: 5px;
+}
+
+.progress-text {
+    color: #aaa;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    max-width: 350px;
+    height: 5px;
+    border-radius: 10px;
+    background: #333;
+    margin: 0 auto 25px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--coral), var(--red));
+    transition: width .3s;
+}
+
+/* Buttons */
+
+.tap-btn {
+    width: 170px;
+    height: 58px;
+    border: none;
+    border-radius: 40px;
+    background: linear-gradient(120deg, var(--coral), var(--red));
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 25px rgba(240,96,90,.2);
+    transition: .2s;
+}
+
+.tap-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 35px rgba(240,96,90,.45);
+}
+
+.tap-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.secondary-btn {
+    background: rgba(0,0,0,.5);
+    border: 1px solid #555;
+    color: white;
+    padding: 11px 23px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.secondary-btn:hover {
+    border-color: var(--coral);
+}
+
+/* Voice status */
+
+.voice-status {
+    color: #aaa;
+    font-size: 13px;
+    margin: 17px 0;
+    min-height: 20px;
+}
+
+.voice-status.listening {
+    color: #ff9a83;
+}
+
+/* Settings */
+
+.settings {
+    max-width: 650px;
+    margin: 35px auto 0;
+    padding: 25px;
+    border: 1px solid #333;
+    border-radius: 15px;
+    background: rgba(0,0,0,.55);
+    text-align: left;
+}
+
+.settings h3 {
+    margin-bottom: 20px;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin: 17px 0;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.setting-row input,
+.setting-row select {
+    background: #111;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 9px;
+    max-width: 145px;
+}
+
+.setting-row input[type="checkbox"] {
+    accent-color: var(--coral);
+    width: 18px;
+    height: 18px;
+}
+
+.target-input {
+    display: flex;
+    gap: 7px;
+}
+
+.target-input input {
+    width: 85px;
+}
+
+/* Completion */
+
+.completion {
+    display: none;
+    margin-top: 20px;
+    color: var(--coral);
+    font-weight: 600;
+    animation: appear .5s ease;
+}
+
+.completion.show {
+    display: block;
+}
+
+footer {
+    max-width: 1100px;
+    margin: 35px auto 0;
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #333;
+    color: #777;
+    font-size: 12px;
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .smoke-video {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 20px 12px;
+    }
+
+    header {
+        margin-bottom: 25px;
+    }
+
+    .main-card {
+        padding: 35px 15px;
+        min-height: 700px;
+    }
+
+    .counter-circle {
+        width: 205px;
+        height: 205px;
+    }
+
+    .count {
+        font-size: 65px;
+    }
+
+    .settings {
+        padding: 18px;
+    }
+
+    .setting-row {
+        font-size: 12px;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">SCRIPT<span>.</span></div>
+    <p>YOUR PERSONAL MEDITATION SPACE</p>
+</header>
+
+<main class="main-card">
+
+    <video class="smoke-video" autoplay muted loop playsinline
+        poster="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/03c58212-3a59-4c80-b19d-30d05a174563.webp">
+        <source src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/f6f4ec49-d5dd-4893-8eb4-fa0f932aceaf.mp4" type="video/mp4">
+    </video>
+
+    <h1>Find Your Inner Peace</h1>
+
+    <p class="subtitle">
+        Take a breath. Focus your mind. Begin your journey.
+        <br>One mantra at a time.
+    </p>
+
+    <!-- Mode selection -->
+
+    <div class="mode-switch">
+        <button class="mode-btn active" id="tapMode">
+            ✋ Tap Mode
+        </button>
+
+        <button class="mode-btn" id="voiceMode">
+            🎙 Voice Mode
+        </button>
+    </div>
+
+    <!-- Counter -->
+
+    <div class="counter-circle" id="counterCircle">
+        <div class="count" id="count">0</div>
+        <div class="count-label">YOUR COUNT</div>
+    </div>
+
+    <p class="progress-text" id="progressText">
+        0 of 108 counts
+    </p>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Tap button -->
+
+    <button class="tap-btn" id="tapButton">
+        TAP TO COUNT
+    </button>
+
+    <!-- Voice status -->
+
+    <p class="voice-status" id="voiceStatus" aria-live="polite">
+        Tap the button to increase your count.
+    </p>
+
+    <!-- Controls -->
+
+    <div class="controls">
+        <button class="secondary-btn" id="pauseButton">
+            Pause
+        </button>
+
+        <button class="secondary-btn" id="resetButton">
+            Reset
+        </button>
+    </div>
+
+    <div class="completion" id="completion">
+        ✨ Meditation Completed! ✨
+        <br>
+        Your session is complete. Take a peaceful breath.
+        <br><br>
+        <button class="secondary-btn" id="newRoundButton">
+            Start New Round
+        </button>
+    </div>
+
+    <!-- Settings -->
+
+    <section class="settings">
+        <h3>⚙ Meditation Settings</h3>
+
+        <div class="setting-row">
+            <label for="targetSelect">Target count</label>
+            <div class="target-input">
+                <select id="targetSelect">
+                    <option value="21">21</option>
+                    <option value="54">54</option>
+                    <option value="108" selected>108</option>
+                    <option value="1008">1008</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <input type="number" id="customTarget"
+                    min="1" max="100000" placeholder="Number"
+                    hidden>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <label for="vibration">Vibration on tap</label>
+            <input type="checkbox" id="vibration" checked>
+        </div>
+
+        <div class="setting-row">
+            <label for="countSound">Voice recognition bell</label>
+            <input type="checkbox" id="countSound" checked>
+        </div>
+
+        <div class="setting-row">
+            <label for="completionSound">Completion bell</label>
+            <input type="checkbox" id="completionSound" checked>
+        </div>
+
+        <div class="setting-row">
+            <label for="mantra">Chant word</label>
+            <input
+                type="text"
+                id="mantra"
+                value="Om"
+                maxlength="60"
+                placeholder="Enter your chant"
+                autocomplete="off"
+            >
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <span>SCRIPT. — A moment for yourself.</span>
+    <span>Find peace in every count.</span>
+</footer>
+
+<script>
+
+// Elements
+
+const countDisplay = document.getElementById("count");
+const progressText = document.getElementById("progressText");
+const progressFill = document.getElementById("progressFill");
+const counterCircle = document.getElementById("counterCircle");
+
+const tapButton = document.getElementById("tapButton");
+const tapMode = document.getElementById("tapMode");
+const voiceMode = document.getElementById("voiceMode");
+
+const voiceStatus = document.getElementById("voiceStatus");
+const completion = document.getElementById("completion");
+
+const pauseButton = document.getElementById("pauseButton");
+const resetButton = document.getElementById("resetButton");
+const newRoundButton = document.getElementById("newRoundButton");
+
+const targetSelect = document.getElementById("targetSelect");
+const customTarget = document.getElementById("customTarget");
+
+const vibration = document.getElementById("vibration");
+const countSound = document.getElementById("countSound");
+const completionSound = document.getElementById("completionSound");
+const mantraInput = document.getElementById("mantra");
+
+// Load the saved chant word, or use Om by default.
+const savedMantra = localStorage.getItem("stillChantWord");
+if (savedMantra && savedMantra.trim()) {
+    mantraInput.value = savedMantra;
+}
+
+// Save the custom chant word when the user changes it.
+mantraInput.addEventListener("change", () => {
+    const chant = mantraInput.value.trim();
+
+    if (!chant) {
+        mantraInput.value = "Om";
+    }
+
+    localStorage.setItem("stillChantWord", mantraInput.value.trim());
+});
+
+// State
+
+let count = 0;
+let target = 108;
+let mode = "tap";
+let paused = false;
+let completed = false;
+let recognition = null;
+let audioContext = null;
+
+// Audio
+
+function getAudioContext() {
+    const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) return null;
+
+    if (!audioContext) {
+        audioContext = new AudioContextClass();
+    }
+
+    if (audioContext.state === "suspended") {
+        audioContext.resume();
+    }
+
+    return audioContext;
+}
+
+// Small bell for every recognized count
+
+function playCountBell() {
+    if (!countSound.checked) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(
+        660, ctx.currentTime + 0.16
+    );
+
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+        0.18, ctx.currentTime + 0.015
+    );
+    gain.gain.exponentialRampToValueAtTime(
+        0.001, ctx.currentTime + 0.4
+    );
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.4);
+}
+
+// Different completion bell
+
+function playCompletionBell() {
+    if (!completionSound.checked) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    // Three gentle tones
+
+    [523.25, 659.25, 783.99].forEach((frequency, index) => {
+
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        const start = ctx.currentTime + index * 0.24;
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = frequency;
+
+        gain.gain.setValueAtTime(0.001, start);
+        gain.gain.exponentialRampToValueAtTime(
+            0.22, start + 0.03
+        );
+        gain.gain.exponentialRampToValueAtTime(
+            0.001, start + 1.1
+        );
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start(start);
+        oscillator.stop(start + 1.1);
+    });
+}
+
+// Vibration
+
+function vibrate() {
+    if (vibration.checked && navigator.vibrate) {
+        navigator.vibrate(35);
+    }
+}
+
+// Update counter display
+
+function updateDisplay() {
+
+    countDisplay.textContent = count;
+
+    progressText.textContent = `${count} of ${target} counts`;
+
+    let percentage = (count / target) * 100;
+
+    progressFill.style.width =
+        Math.min(percentage, 100) + "%";
+}
+
+// Main counting function
+
+function increaseCount(source) {
+
+    if (paused || completed) return;
+
+    count++;
+
+    updateDisplay();
+
+    // Visual animation
+
+    counterCircle.classList.remove("pulse");
+    void counterCircle.offsetWidth;
+    counterCircle.classList.add("pulse");
+
+    if (source === "tap") {
+        vibrate();
+    }
+
+    if (source === "voice") {
+        playCountBell();
+    }
+
+    // Check target
+
+    if (count >= target) {
+        finishMeditation();
+    }
+}
+
+// Completion
+
+function finishMeditation() {
+
+    completed = true;
+    paused = false;
+
+    stopVoiceRecognition();
+
+    tapButton.disabled = true;
+    pauseButton.disabled = true;
+
+    completion.classList.add("show");
+
+    voiceStatus.textContent = "Your meditation is complete!";
+
+    playCompletionBell();
+}
+
+// Tap mode
+
+tapButton.addEventListener("click", () => {
+
+    if (mode === "tap") {
+        increaseCount("tap");
+    } else {
+        // In voice mode, the button starts or stops listening
+        startVoiceRecognition();
+    }
+
+});
+
+// Switch mode
+
+function switchMode(newMode) {
+
+    stopVoiceRecognition();
+
+    mode = newMode;
+    paused = false;
+
+    pauseButton.disabled = false;
+    pauseButton.textContent = "Pause";
+
+    tapMode.classList.toggle("active", mode === "tap");
+    voiceMode.classList.toggle("active", mode === "voice");
+
+    tapButton.disabled = completed;
+
+    if (mode === "tap") {
+
+        tapButton.textContent = "TAP TO COUNT";
+
+        voiceStatus.textContent =
+            "Tap the button to increase your count.";
+
+    } else {
+
+        tapButton.textContent = "START LISTENING";
+
+        voiceStatus.textContent =
+            `Press Start Listening and chant "${mantraInput.value.trim() || "Om"}".`;
+
+    }
+}
+
+tapMode.addEventListener("click", () => switchMode("tap"));
+voiceMode.addEventListener("click", () => switchMode("voice"));
+
+// Voice recognition
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+function startVoiceRecognition() {
+
+    if (mode !== "voice" || paused || completed) return;
+
+    if (!SpeechRecognition) {
+
+        voiceStatus.textContent =
+            "Speech recognition is not supported. Try Chrome.";
+
+        return;
+    }
+
+    if (recognition) {
+        stopVoiceRecognition();
+    }
+
+    try {
+
+        recognition = new SpeechRecognition();
+
+        recognition.lang = "en-IN";
+        recognition.continuous = true;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+
+            voiceStatus.textContent =
+                `🎙 Listening... Chant "${mantraInput.value.trim() || "Om"}" now.`;
+
+            voiceStatus.classList.add("listening");
+
+            tapButton.textContent = "LISTENING...";
+
+        };
+
+        recognition.onresult = (event) => {
+
+            for (
+                let i = event.resultIndex;
+                i < event.results.length;
+                i++
+            ) {
+
+                if (!event.results[i].isFinal) continue;
+
+                const transcript =
+                    event.results[i][0].transcript.toLowerCase();
+
+                // Recognize the one chant word entered in Settings.
+                const chant = mantraInput.value.trim() || "Om";
+                const escapedChant = chant.replace(
+                    /[.*+?^${}()|[\]\\]/g,
+                    "\\$&"
+                );
+
+                // Match the complete word/phrase, not part of another word.
+                const chantPattern = new RegExp(
+                    `(^|[^\\p{L}\\p{N}])${escapedChant}(?=$|[^\\p{L}\\p{N}])`,
+                    "iu"
+                );
+
+                if (chantPattern.test(transcript)) {
+                    if (!completed && !paused) {
+                        increaseCount("voice");
+
+                        if (!completed) {
+                            voiceStatus.textContent =
+                                `✓ "${chant}" recognized! Count: ${count}`;
+                        }
+                    }
+                }
+            }
+
+        };
+
+        recognition.onerror = (event) => {
+
+            voiceStatus.textContent =
+                "Microphone error: " + event.error;
+
+        };
+
+        recognition.onend = () => {
+
+            voiceStatus.classList.remove("listening");
+
+            if (mode === "voice" && !paused && !completed) {
+
+                voiceStatus.textContent =
+                    "Listening paused briefly. Reconnecting...";
+
+                tapButton.textContent = "LISTENING...";
+
+                // Restart if browser ends the continuous session
+
+                setTimeout(() => {
+
+                    if (mode === "voice" && !paused && !completed) {
+                        startVoiceRecognition();
+                    }
+
+                }, 500);
+
+            }
+
+        };
+
+        recognition.start();
+
+    } catch (error) {
+
+        voiceStatus.textContent =
+            "Unable to start microphone. Please try again.";
+
+    }
+}
+
+// Stop voice recognition
+
+function stopVoiceRecognition() {
+
+    if (recognition) {
+
+        const oldRecognition = recognition;
+        recognition = null;
+
+        oldRecognition.onend = null;
+
+        try {
+            oldRecognition.stop();
+        } catch (error) {}
+
+    }
+
+    voiceStatus.classList.remove("listening");
+
+}
+
+// Pause / Resume
+
+pauseButton.addEventListener("click", () => {
+
+    if (completed) return;
+
+    paused = !paused;
+
+    if (paused) {
+
+        stopVoiceRecognition();
+
+        pauseButton.textContent = "Resume";
+
+        voiceStatus.textContent = "Meditation paused.";
+
+        tapButton.disabled = true;
+
+    } else {
+
+        pauseButton.textContent = "Pause";
+
+        tapButton.disabled = false;
+
+        if (mode === "voice") {
+            startVoiceRecognition();
+        } else {
+            voiceStatus.textContent = "Tap to continue counting.";
+        }
+
+    }
+
+});
+
+// Reset
+
+function resetMeditation() {
+
+    stopVoiceRecognition();
+
+    count = 0;
+    paused = false;
+    completed = false;
+
+    completion.classList.remove("show");
+
+    tapButton.disabled = false;
+    pauseButton.disabled = false;
+    pauseButton.textContent = "Pause";
+
+    updateDisplay();
+
+    switchMode(mode);
+
+}
+
+resetButton.addEventListener("click", resetMeditation);
+
+// New round
+
+newRoundButton.addEventListener("click", resetMeditation);
+
+// Target selection
+
+targetSelect.addEventListener("change", () => {
+
+    if (targetSelect.value === "custom") {
+
+        customTarget.hidden = false;
+
+        customTarget.focus();
+
+    } else {
+
+        customTarget.hidden = true;
+
+        target = Number(targetSelect.value);
+
+        resetMeditation();
+
+    }
+
+});
+
+customTarget.addEventListener("change", () => {
+
+    const value = Number(customTarget.value);
+
+    if (!Number.isInteger(value) || value < 1 || value > 100000) {
+        alert("Please enter a target between 1 and 100000.");
+        return;
+    }
+
+    target = value;
+
+    resetMeditation();
+
+});
+
+// Initial display
+
+updateDisplay();
+
+// Video fade in
+
+const video = document.querySelector(".smoke-video");
+
+if (video && !window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+).matches) {
+
+    video.addEventListener("loadeddata", () => {
+        video.classList.add("loaded");
+    });
+
+    video.play().catch(() => {});
+
+}
+
+</script>
+
+</body>
+</html>
