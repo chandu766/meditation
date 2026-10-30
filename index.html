@@ -1,5 +1,5 @@
 
-<!DOCTYPE html>  
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -396,7 +396,7 @@ footer {
 <body>
 
 <header>
-    <div class="logo">SCRIPT<span>.</span></div>
+    <div class="logo">STILL<span>.</span></div>
     <p>YOUR PERSONAL MEDITATION SPACE</p>
 </header>
 
@@ -528,7 +528,7 @@ footer {
 </main>
 
 <footer>
-    <span>SCRIPT. — A moment for yourself.</span>
+    <span>STILL. — A moment for yourself.</span>
     <span>Find peace in every count.</span>
 </footer>
 
@@ -585,6 +585,9 @@ let mode = "tap";
 let paused = false;
 let completed = false;
 let recognition = null;
+let voiceRestartTimer = null;
+let voiceListeningRequested = false;
+let voicePermissionBlocked = false;
 let audioContext = null;
 
 // Audio
@@ -677,8 +680,15 @@ function playCompletionBell() {
 // Vibration
 
 function vibrate() {
-    if (vibration.checked && navigator.vibrate) {
-        navigator.vibrate(35);
+    if (!vibration.checked) return;
+
+    if (typeof navigator.vibrate === "function") {
+        navigator.vibrate(80);
+    } else {
+        // Desktop/laptop browsers generally have no vibration motor.
+        // The counter's pulse animation remains the visual feedback.
+        voiceStatus.textContent =
+            "Visual pulse used — vibration is available only on supported devices.";
     }
 }
 
@@ -807,115 +817,145 @@ function startVoiceRecognition() {
     if (mode !== "voice" || paused || completed) return;
 
     if (!SpeechRecognition) {
-
         voiceStatus.textContent =
-            "Speech recognition is not supported. Try Chrome.";
-
+            "Speech recognition is unavailable in this browser. Update Chrome and try again.";
         return;
     }
 
+    // The first start must come from the user's button click.
+    voiceListeningRequested = true;
+    voicePermissionBlocked = false;
+
     if (recognition) {
-        stopVoiceRecognition();
+        try {
+            recognition.stop();
+        } catch (error) {}
+        recognition = null;
+    }
+
+    if (voiceRestartTimer) {
+        clearTimeout(voiceRestartTimer);
+        voiceRestartTimer = null;
     }
 
     try {
+        const activeRecognition = new SpeechRecognition();
+        recognition = activeRecognition;
 
-        recognition = new SpeechRecognition();
+        activeRecognition.lang = "en-IN";
+        activeRecognition.continuous = true;
+        activeRecognition.interimResults = true;
+        activeRecognition.maxAlternatives = 3;
 
-        recognition.lang = "en-IN";
-        recognition.continuous = true;
-        recognition.interimResults = false;
-
-        recognition.onstart = () => {
-
+        activeRecognition.onstart = () => {
             voiceStatus.textContent =
-                `🎙 Listening... Chant "${mantraInput.value.trim() || "Om"}" now.`;
-
+                `🎙 Listening... Say "${mantraInput.value.trim() || "Om"}" clearly.`;
             voiceStatus.classList.add("listening");
-
             tapButton.textContent = "LISTENING...";
-
         };
 
-        recognition.onresult = (event) => {
+        activeRecognition.onresult = (event) => {
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript.trim();
 
-            for (
-                let i = event.resultIndex;
-                i < event.results.length;
-                i++
-            ) {
+                if (!event.results[i].isFinal || !transcript) continue;
 
-                if (!event.results[i].isFinal) continue;
-
-                const transcript =
-                    event.results[i][0].transcript.toLowerCase();
-
-                // Recognize the one chant word entered in Settings.
                 const chant = mantraInput.value.trim() || "Om";
                 const escapedChant = chant.replace(
                     /[.*+?^${}()|[\]\\]/g,
                     "\\$&"
                 );
 
-                // Match the complete word/phrase, not part of another word.
                 const chantPattern = new RegExp(
                     `(^|[^\\p{L}\\p{N}])${escapedChant}(?=$|[^\\p{L}\\p{N}])`,
                     "iu"
                 );
 
                 if (chantPattern.test(transcript)) {
-                    if (!completed && !paused) {
+                    if (!completed && !paused && mode === "voice") {
                         increaseCount("voice");
-
                         if (!completed) {
                             voiceStatus.textContent =
-                                `✓ "${chant}" recognized! Count: ${count}`;
+                                `✓ "${chant}" heard. Count: ${count}`;
                         }
                     }
+                } else {
+                    // Show what Chrome heard, so the user can tell whether
+                    // the microphone is working even when the word differs.
+                    voiceStatus.textContent =
+                        `I heard: "${transcript}" — waiting for "${chant}".`;
                 }
             }
-
         };
 
-        recognition.onerror = (event) => {
+        activeRecognition.onerror = (event) => {
+            const error = event.error || "unknown";
 
-            voiceStatus.textContent =
-                "Microphone error: " + event.error;
+            if (
+                error === "not-allowed" ||
+                error === "service-not-allowed" ||
+                error === "audio-capture"
+            ) {
+                voicePermissionBlocked = true;
+                voiceListeningRequested = false;
+                voiceStatus.classList.remove("listening");
 
+                const helpText = error === "audio-capture"
+                    ? "Chrome cannot access a microphone. Check that your laptop microphone is connected and enabled."
+                    : "Microphone access is blocked. In Chrome, open the site controls beside the address bar, set Microphone to Allow, then refresh.";
+
+                voiceStatus.textContent = helpText;
+            } else if (error === "network") {
+                voiceStatus.textContent =
+                    "Speech service network error. Check your internet connection and try again.";
+            } else if (error === "no-speech") {
+                voiceStatus.textContent =
+                    `No speech detected. Keep the microphone close and say "${mantraInput.value.trim() || "Om"}".`;
+            } else {
+                voiceStatus.textContent =
+                    `Voice recognition error: ${error}. Press Start Listening to try again.`;
+            }
         };
 
-        recognition.onend = () => {
-
+        activeRecognition.onend = () => {
             voiceStatus.classList.remove("listening");
 
-            if (mode === "voice" && !paused && !completed) {
+            if (
+                recognition === activeRecognition &&
+                voiceListeningRequested &&
+                !voicePermissionBlocked &&
+                mode === "voice" &&
+                !paused &&
+                !completed
+            ) {
+                voiceStatus.textContent = "Reconnecting to speech recognition...";
 
-                voiceStatus.textContent =
-                    "Listening paused briefly. Reconnecting...";
-
-                tapButton.textContent = "LISTENING...";
-
-                // Restart if browser ends the continuous session
-
-                setTimeout(() => {
-
-                    if (mode === "voice" && !paused && !completed) {
-                        startVoiceRecognition();
+                voiceRestartTimer = setTimeout(() => {
+                    if (
+                        recognition === activeRecognition &&
+                        voiceListeningRequested &&
+                        mode === "voice" &&
+                        !paused &&
+                        !completed
+                    ) {
+                        try {
+                            activeRecognition.start();
+                        } catch (error) {
+                            voiceStatus.textContent =
+                                "Could not restart listening. Press Start Listening to try again.";
+                        }
                     }
-
-                }, 500);
-
+                }, 800);
             }
-
         };
 
-        recognition.start();
+        activeRecognition.start();
 
     } catch (error) {
-
+        voiceListeningRequested = false;
+        voiceStatus.classList.remove("listening");
         voiceStatus.textContent =
-            "Unable to start microphone. Please try again.";
-
+            "Could not start voice recognition. Allow microphone access in Chrome, refresh, and try again.";
     }
 }
 
@@ -923,21 +963,24 @@ function startVoiceRecognition() {
 
 function stopVoiceRecognition() {
 
-    if (recognition) {
+    voiceListeningRequested = false;
 
+    if (voiceRestartTimer) {
+        clearTimeout(voiceRestartTimer);
+        voiceRestartTimer = null;
+    }
+
+    if (recognition) {
         const oldRecognition = recognition;
         recognition = null;
-
         oldRecognition.onend = null;
 
         try {
             oldRecognition.stop();
         } catch (error) {}
-
     }
 
     voiceStatus.classList.remove("listening");
-
 }
 
 // Pause / Resume
